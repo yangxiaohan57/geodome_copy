@@ -1,3 +1,7 @@
+"""A set of functions and command line tool to transform tags (key:values)
+downloaded from OSM into the proposed hierarchical taxonomy of labels.
+and rasterize them into an image that can be used as target for image segmentation task."""
+
 import argparse
 import json
 import os
@@ -19,10 +23,6 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
-
-"""A set of functions and command line tool to transform tags (key:values)
-downloaded from OSM into the proposed hierarchical taxonomy of labels.
-and rasterize them into an image that can be used as target for image segmentation task."""
 
 # define constants
 type_convert_dict = {'Key': str, 'Value': str}
@@ -55,7 +55,7 @@ def get_rasterized_labels(gdf, meta):
     img_size = (meta['height'], meta['width'])
     pixels = np.zeros(img_size, dtype=np.uint8)
     # make linestrings thicker than 1 pixel
-    # 1 degree is approximately 111,111 meters
+    # 1 degree is approximately 111,111 meters, so we buffer for .00005 to get 11 meter wide lines
     gdf['geometry'] = gdf['geometry'].apply(lambda g: g.buffer(.00005) if g.geom_type == 'LineString' else g)
     for depth in sorted(gdf.Priority.unique())[::-1]:
         tmp = gdf[gdf.Priority == depth]
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-lp', '--label_priority',
         default='label_priority.csv',
-        help='path to csv dictionary of tags depths',
+        help='path to csv dictionary of tag depths',
         type=str
     )
 
