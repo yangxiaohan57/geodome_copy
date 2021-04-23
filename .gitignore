@@ -1,0 +1,9 @@
+.*/
+notebooks/.ipynb_checkpoints/*
+notebooks/cache/*
+__pycache__/*
+data/*
+.DS_Store
+QA_tool/static/_*
+QA_tool/__pycache__/*
+QA_tool/flask_session/*
