@@ -1,3 +1,7 @@
+"""
+CLI tool to downloads OSM data asynchronously
+"""
+
 import os
 import time
 import json
@@ -107,6 +111,13 @@ if __name__ == "__main__":
         default=10,
         type=int,
     )
+    parser.add_argument(
+        "-t",
+        "--pause_time",
+        help="number of seconds to wait between request batches",
+        default=60,
+        type=int,
+    )
     args = parser.parse_args()
 
     input_df = pd.read_csv(args.input)
@@ -121,7 +132,7 @@ if __name__ == "__main__":
                                     args.lon_col, 
                                     args.contact_email)
         part.to_csv(tmpfname, index=False)
-        time.sleep(60)
+        time.sleep(args.pause_time)
 
     outfile = pd.concat(
         [
