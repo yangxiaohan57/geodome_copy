@@ -30,7 +30,9 @@ async def fetch(session, index, query, contact, retry_limit=5):
             except Exception:
                 retries += 1
                 # TODO: does the response status carry the same info?
-                if "The server is probably too busy to handle your request" in str(response_content):
+                if "The server is probably too busy to handle your request" in str(
+                    response_content
+                ):
                     await asyncio.sleep(2)
                     pass
                 pass
@@ -45,7 +47,13 @@ async def osm_async_download(bbox_list, template, contact):
             for (index, bbox) in bbox_list
         ]
         responses = [
-            await t for t in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc='download', leave=False)
+            await t
+            for t in tqdm(
+                asyncio.as_completed(tasks),
+                total=len(tasks),
+                desc="download",
+                leave=False,
+            )
         ]
     return responses
 
@@ -79,7 +87,7 @@ if __name__ == "__main__":
         "-ce",
         "--contact_email",
         help="contact email to include in the request header",
-        default='TBD',
+        default="TBD",
         type=str,
     )
 
@@ -122,15 +130,13 @@ if __name__ == "__main__":
 
     input_df = pd.read_csv(args.input)
     df_parts = np.array_split(input_df, args.splits)
-    for i, part in enumerate(tqdm(df_parts, desc='splits')):
+    for i, part in enumerate(tqdm(df_parts, desc="splits")):
         tmpfname = "{}_p{}.csv".format(args.outfile.split(".")[0], i)
         if os.path.exists(tmpfname):
             continue
-        part["tags"] = get_tags_col(part, 
-                                    args.distance, 
-                                    args.lat_col, 
-                                    args.lon_col, 
-                                    args.contact_email)
+        part["tags"] = get_tags_col(
+            part, args.distance, args.lat_col, args.lon_col, args.contact_email
+        )
         part.to_csv(tmpfname, index=False)
         time.sleep(args.pause_time)
 

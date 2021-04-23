@@ -19,8 +19,7 @@ DEFAULT_OVERPASS_URL = "https://overpass.kumi.systems/api/interpreter"
 DEFAULT_QUERY_TEMPLATE = "[timeout:900][out:json];(node{};<;>;);out;"
 
 
-
-def _osm_download(bbox = None, url: str = DEFAULT_OVERPASS_URL, custom_query: str = None):
+def _osm_download(bbox=None, url: str = DEFAULT_OVERPASS_URL, custom_query: str = None):
     """Capture the osm data for coordinates and defined query
     Arguments:
         bbox : Input coordinates for a bbox in a tuple. The structure is
@@ -49,11 +48,12 @@ def _osm_download(bbox = None, url: str = DEFAULT_OVERPASS_URL, custom_query: st
         query = custom_query
         pass
     if query is None:
-        raise ValueError('you must either pass a valid bounding box or a custome query to the function.')
+        raise ValueError(
+            "you must either pass a valid bounding box or a custome query to the function."
+        )
 
-    response = requests.get(url, params={'data': query})
+    response = requests.get(url, params={"data": query})
     return response.json()
-
 
 
 def _parse_coords(response: dict):
@@ -67,7 +67,6 @@ def _parse_coords(response: dict):
         if "type" in result and result["type"] == "node":
             coords[result["id"]] = {"lat": result["lat"], "lon": result["lon"]}
     return coords
-
 
 
 def _parse_osm_node(response: dict):
@@ -99,7 +98,7 @@ def _is_closed_polygon(coords, nodes: list):
     """
     first_node_coords = coords[nodes[0]]["lon"], coords[nodes[0]]["lat"]
     last_node_coords = coords[nodes[-1]]["lon"], coords[nodes[-1]]["lat"]
-    return (first_node_coords == last_node_coords)
+    return first_node_coords == last_node_coords
 
 
 def _parse_polygonal_poi(coords, response, verbose):
@@ -108,11 +107,15 @@ def _parse_polygonal_poi(coords, response, verbose):
         nodes = response["nodes"]
 
         try:
-            if(_is_closed_polygon(coords, nodes)):
-                geometry = Polygon([(coords[node]["lon"], coords[node]["lat"]) for node in nodes])
+            if _is_closed_polygon(coords, nodes):
+                geometry = Polygon(
+                    [(coords[node]["lon"], coords[node]["lat"]) for node in nodes]
+                )
                 pass
             else:
-                geometry = LineString([(coords[node]["lon"], coords[node]["lat"]) for node in nodes])
+                geometry = LineString(
+                    [(coords[node]["lon"], coords[node]["lat"]) for node in nodes]
+                )
                 pass
 
             poi = {"osmid": response["id"], "nodes": nodes, "geometry": geometry}
@@ -123,7 +126,7 @@ def _parse_polygonal_poi(coords, response, verbose):
             return poi
 
         except KeyError:
-            if(verbose):
+            if verbose:
                 print("Node in Way not included in response")
                 pass
             pass
@@ -142,7 +145,11 @@ def _parse_osm_relations(relations, df_osm_ways, verbose):
         try:
             if relation["tags"]["type"] == "multipolygon":
                 # Parse member 'way' ids
-                member_way_ids = [member["ref"] for member in relation["members"] if member["type"] == "way"]
+                member_way_ids = [
+                    member["ref"]
+                    for member in relation["members"]
+                    if member["type"] == "way"
+                ]
                 # Extract the ways
                 member_ways = df_osm_ways.reindex(member_way_ids)
                 # Extract the nodes of those ways
@@ -158,11 +165,14 @@ def _parse_osm_relations(relations, df_osm_ways, verbose):
                 if multipoly:
                     # Create GeoDataFrame with the tags and the MultiPolygon and its
                     # 'ways' (ids), and the 'nodes' of those ways
-                    geo = gpd.GeoDataFrame(
-                        relation["tags"], index=[relation["id"]])
+                    geo = gpd.GeoDataFrame(relation["tags"], index=[relation["id"]])
                     # Initialize columns (needed for .loc inserts)
                     geo = geo.assign(
-                        geometry=None, ways=None, nodes=None, element_type=None, osmid=None
+                        geometry=None,
+                        ways=None,
+                        nodes=None,
+                        element_type=None,
+                        osmid=None,
                     )
                     # Add attributes
                     geo.loc[relation["id"], "geometry"] = multipoly
@@ -176,13 +186,14 @@ def _parse_osm_relations(relations, df_osm_ways, verbose):
                     # Remove such 'ways' from 'df_osm_ways' that are part of the 'relation'
                     df_osm_ways = df_osm_ways.drop(member_way_ids)
         except Exception:
-            if(verbose):
+            if verbose:
                 print(f'Could not parse OSM relation {relation["id"]}')
                 pass
 
     # Merge df_osm_ways and the gdf_relations
     df_osm_ways = df_osm_ways.append(gdf_relations, sort=False)
     return df_osm_ways
+
 
 def _invalid_multipoly_handler(gdf, relation, way_ids):  # pragma: no cover
     """from osmnx.pois"""
@@ -193,7 +204,7 @@ def _invalid_multipoly_handler(gdf, relation, way_ids):  # pragma: no cover
 
     except Exception:
         # TODO: redirect error message
-        # print(f'Invalid geometry at relation "{relation["id"]}", way IDs: {way_ids}') 
+        # print(f'Invalid geometry at relation "{relation["id"]}", way IDs: {way_ids}')
         return None
 
 
@@ -222,7 +233,9 @@ def _create_gdf(response, crs, verbose):
 
         elif result["type"] == "way":
             # Parse POI area Polygon
-            poi_area = _parse_polygonal_poi(coords=coords, response=result, verbose=verbose)
+            poi_area = _parse_polygonal_poi(
+                coords=coords, response=result, verbose=verbose
+            )
             if poi_area:
                 # Add element_type
                 poi_area["element_type"] = "way"
@@ -244,7 +257,9 @@ def _create_gdf(response, crs, verbose):
     gdf_ways.crs = crs
 
     # Parse relations (MultiPolygons) from 'ways'
-    gdf_ways = _parse_osm_relations(relations=relations, df_osm_ways=gdf_ways, verbose=verbose)
+    gdf_ways = _parse_osm_relations(
+        relations=relations, df_osm_ways=gdf_ways, verbose=verbose
+    )
 
     # Combine GeoDataFrames
     gdf = gdf_nodes.append(gdf_ways, sort=False)
@@ -266,7 +281,7 @@ def _bbox_from_point(point, dist=1000):
 
     lat, lon = point
     delta_lat = angular_distance
-    delta_lon = angular_distance/math.cos(math.radians(lat))
+    delta_lon = angular_distance / math.cos(math.radians(lat))
 
     south, north = lat - delta_lat, lat + delta_lat
     west, east = lon - delta_lon, lon + delta_lon
@@ -276,8 +291,8 @@ def _bbox_from_point(point, dist=1000):
 def gdf_from_bbox(bbox, verbose=False):
     """
     takes as input a bounding box, (south, west, north, east)
-    returns a GeoDataFrame for data returned from overpass API within that 
-    bounding box 
+    returns a GeoDataFrame for data returned from overpass API within that
+    bounding box
     """
     data = _osm_download(bbox)
     gdf = _create_gdf(data, DEFAULT_CRS, verbose)
@@ -287,7 +302,7 @@ def gdf_from_bbox(bbox, verbose=False):
 def gdf_from_point(point, dist=1000, verbose=False):
     """
     takes as input a coordinate point (lat, long)
-    returns a GeoDataFrame for data returned from overpass API within 
+    returns a GeoDataFrame for data returned from overpass API within
     a bounding box centered around that point with side-lenght dist
     """
     bbox = _bbox_from_point(point, dist)
@@ -299,23 +314,28 @@ def gdf_from_point(point, dist=1000, verbose=False):
 def count_tags_in_area(point, dist=1000):
     """
     takes as input a coordinate `point` (lat, long)
-    returns a dictionary of available OSM tags and the number of 
-    nodes with that tag within a bounding box centered around 
+    returns a dictionary of available OSM tags and the number of
+    nodes with that tag within a bounding box centered around
     that point with side-lenght `dist`
     """
     bbox = _bbox_from_point(point, dist)
     data = _osm_download(bbox)
 
     tag_counts = {}
-    for element in data['elements']:
-        if('tags' in element):
-            for tag_key in element['tags']:
+    for element in data["elements"]:
+        if "tags" in element:
+            for tag_key in element["tags"]:
                 tag_value = f"{tag_key}>>{element['tags'][tag_key]}"
-                tag_counts[tag_key] = tag_counts.get(tag_key, 0)+1
-                tag_counts[tag_value] = tag_counts.get(tag_value, 0)+1
+                tag_counts[tag_key] = tag_counts.get(tag_key, 0) + 1
+                tag_counts[tag_value] = tag_counts.get(tag_value, 0) + 1
                 pass
             pass
         pass
     # sort by count
-    tag_counts = {tag: count for tag,count in sorted(tag_counts.items(), key=lambda item: item[1], reverse=True)}
+    tag_counts = {
+        tag: count
+        for tag, count in sorted(
+            tag_counts.items(), key=lambda item: item[1], reverse=True
+        )
+    }
     return tag_counts

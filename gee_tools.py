@@ -9,6 +9,7 @@ import pandas as pd
 import os
 
 from osm_tools import _bbox_from_point, gdf_from_bbox
+
 ee.Initialize()
 
 from skimage.io import imread
@@ -17,6 +18,7 @@ from geetools import batch
 from tqdm import tqdm
 
 from argparse import ArgumentParser
+
 
 def osm2gee_bbox(bbox):
     """
@@ -29,18 +31,16 @@ def download_NAIP_toLocal(bbox, name, scale=1):
     """
     downloads NAIP imagery from the specified bounding box and saves it as `name`
     """
-    AOI = ee.Geometry.Rectangle(list(bbox), 
-                                'EPSG:4326', 
-                                False)
+    AOI = ee.Geometry.Rectangle(list(bbox), "EPSG:4326", False)
 
-    collection = (ee.ImageCollection("USDA/NAIP/DOQQ")
-                .filterDate('2010-01-01', '2019-01-01')
-                .filterBounds(AOI)
-                )
+    collection = (
+        ee.ImageCollection("USDA/NAIP/DOQQ")
+        .filterDate("2010-01-01", "2019-01-01")
+        .filterBounds(AOI)
+    )
 
     image = ee.Image(collection.mosaic()).clip(AOI)
     batch.image.toLocal(image, name, scale=scale, region=AOI)
-
 
 
 def lc_code_to_str(code):
@@ -48,61 +48,76 @@ def lc_code_to_str(code):
     translates land cover codes to their names
     """
     if code == 11:
-        return 'open_water'
-    elif 20<code <25:
-        return 'developed'
+        return "open_water"
+    elif 20 < code < 25:
+        return "developed"
     elif code == 31:
-        return 'barren'
+        return "barren"
     elif 40 < code < 44:
-        return 'forest'
+        return "forest"
     elif code == 52:
-        return 'scrub'
+        return "scrub"
     elif code == 71:
-        return 'grassland'
+        return "grassland"
     elif code == 81:
-        return 'pasture'
+        return "pasture"
     elif code == 82:
-        return 'crops'
+        return "crops"
     elif code == 90 or code == 95:
-        return 'wetlands'
+        return "wetlands"
     else:
         return None
-    
-        
+
+
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument('-i', '--input', 
-                    help='path to csv input file', 
-                    type=str)
-    parser.add_argument('-d', '--distance', 
-                        help='side length for area of interest', 
-                        default=500, 
-                        type=int)
-    parser.add_argument('-e', '--errorlog', 
-                        help='path to error log file', 
-                        default='data/error.log', 
-                        type=str)
-    
-    parser.add_argument('-o', '--output_dir', 
-                        help='path to output directory', 
-                        default='data/', 
-                        type=str)
-    parser.add_argument('-lat', '--lat_col', 
-                        help='name of the column that contains the latitude', 
-                        default='lat', 
-                        type=str)
-    parser.add_argument('-lon', '--lon_col', 
-                        help='name of the column that contains the longitude', 
-                        default='lon', 
-                        type=str)
-    parser.add_argument('-dc', '--domain_col', 
-                        help='name of the column that contains the locations designated domain (land cover type by default)', 
-                        default='LC_TYPE', 
-                        type=str)
-    parser.add_argument('-id', '--id_col', 
-                        help='name of the column that contains the point id', 
-                        default='rand_point_id', 
-                        type=str)
+    parser.add_argument("-i", "--input", help="path to csv input file", type=str)
+    parser.add_argument(
+        "-d",
+        "--distance",
+        help="side length for area of interest",
+        default=500,
+        type=int,
+    )
+    parser.add_argument(
+        "-e",
+        "--errorlog",
+        help="path to error log file",
+        default="data/error.log",
+        type=str,
+    )
+
+    parser.add_argument(
+        "-o", "--output_dir", help="path to output directory", default="data/", type=str
+    )
+    parser.add_argument(
+        "-lat",
+        "--lat_col",
+        help="name of the column that contains the latitude",
+        default="lat",
+        type=str,
+    )
+    parser.add_argument(
+        "-lon",
+        "--lon_col",
+        help="name of the column that contains the longitude",
+        default="lon",
+        type=str,
+    )
+    parser.add_argument(
+        "-dc",
+        "--domain_col",
+        help="name of the column that contains the locations designated domain (land cover type by default)",
+        default="LC_TYPE",
+        type=str,
+    )
+    parser.add_argument(
+        "-id",
+        "--id_col",
+        help="name of the column that contains the point id",
+        default="rand_point_id",
+        type=str,
+    )
 
     args = parser.parse_args()
     if not os.path.exists(args.output_dir):
@@ -111,7 +126,7 @@ if __name__ == "__main__":
 
     points = pd.read_csv(args.input)
     if "SAMPLE_LC1" in points.columns:
-        points[args.domain_col] = points.SAMPLE_LC1.apply(lambda c:lc_code_to_str(c))
+        points[args.domain_col] = points.SAMPLE_LC1.apply(lambda c: lc_code_to_str(c))
     points = points.dropna(subset=[args.domain_col])
     # with open('data/error.log', 'r') as f:
     #    lines = f.readlines()
@@ -124,14 +139,18 @@ if __name__ == "__main__":
         tmp = points[points.domain_col == lc]
 
         for i, point in tqdm(tmp.iterrows()):
-            fname = f"{args.output_dir}/{point[args.domain_col]}_id_{point[args.id_col]}"
-            if os.path.exists(f'{fname}'): # or point['rand_point_id'] in error_points:
+            fname = (
+                f"{args.output_dir}/{point[args.domain_col]}_id_{point[args.id_col]}"
+            )
+            if os.path.exists(f"{fname}"):  # or point['rand_point_id'] in error_points:
                 continue
-            bbox = _bbox_from_point((point[args.lat_col], point[args.lon_col]), args.distance)
+            bbox = _bbox_from_point(
+                (point[args.lat_col], point[args.lon_col]), args.distance
+            )
             bbox = osm2gee_bbox(bbox)
             try:
                 download_NAIP_toLocal(bbox, fname)
-                os.remove(f'{fname}.zip')
+                os.remove(f"{fname}.zip")
             except Exception as e:
                 logf.write(f"point id {point[args.id_col]}: {e}\n")
                 pass
