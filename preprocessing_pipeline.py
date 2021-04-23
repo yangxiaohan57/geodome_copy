@@ -1,3 +1,7 @@
+"""
+CLI tool to merge RGB bands and store meta of tiff files
+"""
+
 import os
 import pickle
 from argparse import ArgumentParser
