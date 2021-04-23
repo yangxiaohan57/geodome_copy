@@ -19,7 +19,28 @@ DEFAULT_OVERPASS_URL = "https://overpass.kumi.systems/api/interpreter"
 DEFAULT_QUERY_TEMPLATE = "[timeout:900][out:json];(node{};<;>;);out;"
 
 
-def _osm_download(bbox=None, url=DEFAULT_OVERPASS_URL, custom_query=None):
+
+def _osm_download(bbox = None, url: str = DEFAULT_OVERPASS_URL, custom_query: str = None):
+    """Capture the osm data for coordinates and defined query
+    Arguments:
+        bbox : Input coordinates for a bbox in a tuple. The structure is
+            (lat_min, lon_min, lat_max, lon_max)
+        url : website that interpret the request based on the bbx and the
+            custom query.
+        custom_query : By default uses the DEFAULT_QUERY_TEMPLATE to collect
+            all element's types. However, it can be edited to return specific
+            types of elements in the query request.
+    Return: Dictionary with elements that can be of different types: node, way
+        or relation. The following is an example of a type: node
+            {'elements': [{'id': 5037628774,
+               'lat': -12.9338055,
+               'lon': -74.2517333,
+               'tags': {'addr:street': 'Jirón Miguel Untiveros',
+                        'name': 'Ferreteria Aguilar',
+                        'shop': 'hardware',
+                        'source': 'Kaart Ground Survey 2017'},
+               'type': 'node'}]
+    """
     if bbox is not None:
         # TODO: assert valid bbox
         query = DEFAULT_QUERY_TEMPLATE.format(bbox)
@@ -34,8 +55,13 @@ def _osm_download(bbox=None, url=DEFAULT_OVERPASS_URL, custom_query=None):
     return response.json()
 
 
-def _parse_coords(response):
-    """from osmnx.pois"""
+
+def _parse_coords(response: dict):
+    """from osmnx.pois
+    Takes the dictionary format from _osm_download with the elements
+    and return the dictionary with id as key and lat, lon as values.
+    {346458585: {'lat': -12.9361043, 'lon': -74.2574139}}
+    """
     coords = {}
     for result in response["elements"]:
         if "type" in result and result["type"] == "node":
@@ -43,8 +69,14 @@ def _parse_coords(response):
     return coords
 
 
-def _parse_osm_node(response):
-    """from osmnx.pois"""
+
+def _parse_osm_node(response: dict):
+    """from osmnx.pois
+    Takes the node elements from _osm_download and returns the id as osmid and
+    the corresponding point as Point geometry in a dictionary.
+        {'osmid': 346458585,
+         'geometry': <shapely.geometry.point.Point at 0x20d2dcf8bb0>}
+    """
     try:
         point = Point(response["lon"], response["lat"])
 
@@ -60,7 +92,7 @@ def _parse_osm_node(response):
     return poi
 
 
-def _is_closed_polygon(coords, nodes):
+def _is_closed_polygon(coords, nodes: list):
     """
     if the coordinates of the first and last node are the same then
     it is a closed polygon, otherwise it's a line
@@ -222,9 +254,12 @@ def _create_gdf(response, crs, verbose):
 
 def _bbox_from_point(point, dist=1000):
     """
-    takes as input a coordinate point (lat, long)
-    returns a bounding box (south, west, north, east) centered on that poing with side length dist
-    formula from http://www.movable-type.co.uk/scripts/latlong.html#rhumblines
+    Arguments:
+        point: coordinate point (lat, long)
+        dist: radial distance from the point as center
+    Returns a bounding box (south, west, north, east) centered on that point
+        with side length dist formula from:
+        http://www.movable-type.co.uk/scripts/latlong.html#rhumblines
     """
     earth_radius = 6371000  # meters
     angular_distance = math.degrees(0.5 * (dist / earth_radius))
@@ -234,7 +269,7 @@ def _bbox_from_point(point, dist=1000):
     delta_lon = angular_distance/math.cos(math.radians(lat))
 
     south, north = lat - delta_lat, lat + delta_lat
-    west , east = lon - delta_lon, lon + delta_lon
+    west, east = lon - delta_lon, lon + delta_lon
     return south, west, north, east
 
 
