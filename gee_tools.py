@@ -1,3 +1,7 @@
+"""
+CLI tool to download satellite imagery from google earth engine
+"""
+
 import ee
 import numpy as np
 import pandas as pd
@@ -15,11 +19,16 @@ from tqdm import tqdm
 from argparse import ArgumentParser
 
 def osm2gee_bbox(bbox):
-    # convert bbox from lat lon to lon lat
+    """
+    convert bbox from lat lon (OSM default) to lon lat (GEE default)
+    """
     return bbox[1], bbox[0], bbox[3], bbox[2]
 
 
 def download_NAIP_toLocal(bbox, name, scale=1):
+    """
+    downloads NAIP imagery from the specified bounding box and saves it as `name`
+    """
     AOI = ee.Geometry.Rectangle(list(bbox), 
                                 'EPSG:4326', 
                                 False)
@@ -35,6 +44,9 @@ def download_NAIP_toLocal(bbox, name, scale=1):
 
 
 def lc_code_to_str(code):
+    """
+    translates land cover codes to their names
+    """
     if code == 11:
         return 'open_water'
     elif 20<code <25:
@@ -83,8 +95,8 @@ if __name__ == "__main__":
                         help='name of the column that contains the longitude', 
                         default='lon', 
                         type=str)
-    parser.add_argument('-lc', '--land_cover_col', 
-                        help='name of the column that contains the land cover type', 
+    parser.add_argument('-dc', '--domain_col', 
+                        help='name of the column that contains the locations designated domain (land cover type by default)', 
                         default='LC_TYPE', 
                         type=str)
     parser.add_argument('-id', '--id_col', 
@@ -98,20 +110,21 @@ if __name__ == "__main__":
         pass
 
     points = pd.read_csv(args.input)
-    points[args.land_cover_col] = points.SAMPLE_LC1.apply(lambda c:lc_code_to_str(c))
-    points = points.dropna(subset=[args.land_cover_col])
+    if "SAMPLE_LC1" in points.columns:
+        points[args.domain_col] = points.SAMPLE_LC1.apply(lambda c:lc_code_to_str(c))
+    points = points.dropna(subset=[args.domain_col])
     # with open('data/error.log', 'r') as f:
     #    lines = f.readlines()
     # error_points = set([int(l.split(':')[0].split()[-1]) for l in lines])
 
     logf = open(args.errorlog, "w")
 
-    for lc in tqdm(points.LC_TYPE.unique()):
+    for lc in tqdm(points.domain_col.unique()):
         print(lc)
-        tmp = points[points.LC_TYPE == lc]
+        tmp = points[points.domain_col == lc]
 
         for i, point in tqdm(tmp.iterrows()):
-            fname = f"{args.output_dir}/{point[args.land_cover_col]}_id_{point[args.id_col]}"
+            fname = f"{args.output_dir}/{point[args.domain_col]}_id_{point[args.id_col]}"
             if os.path.exists(f'{fname}'): # or point['rand_point_id'] in error_points:
                 continue
             bbox = _bbox_from_point((point[args.lat_col], point[args.lon_col]), args.distance)
