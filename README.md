@@ -1,6 +1,8 @@
 # GEODOME
 
-GEODOME is a tool that the user to obtain open-source annotated Earth observation (EO) data and run image segmentation experiments with them using the mrs submodule. more information about the project is available in the [paper](documents/final_paper_GEODOME.pdf) and [presentation slides](documents/GEODOME_client_talk.pdf)
+GEODOME is a tool that the user to obtain open-source annotated Earth observation (EO) data and run image segmentation experiments with them using the mrs submodule. 
+
+More information about the project is available in the [paper](documents/final_paper_GEODOME.pdf) and [presentation slides](documents/GEODOME_client_talk.pdf).
 
 ## Installation
 
