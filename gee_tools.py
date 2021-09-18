@@ -134,9 +134,9 @@ if __name__ == "__main__":
 
     logf = open(args.errorlog, "w")
 
-    for lc in tqdm(points.domain_col.unique()):
+    for lc in tqdm(points[args.domain_col].unique()):
         print(lc)
-        tmp = points[points.domain_col == lc]
+        tmp = points[points[args.domain_col] == lc]
 
         for i, point in tqdm(tmp.iterrows()):
             fname = (
