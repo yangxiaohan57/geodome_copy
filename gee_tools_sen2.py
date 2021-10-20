@@ -61,7 +61,7 @@ def export_image(collection, folder, type, scale=30, nimg=50, maxPixels=1e10, re
 
     for i in range(n):
         img = ee.Image(colList.get(i))
-        id = img.id().getInfo()
+        imgid = img.id().getInfo()
         if region is None:
             region = img.geometry().bounds().getInfo()["coordinates"]
 
@@ -71,15 +71,23 @@ def export_image(collection, folder, type, scale=30, nimg=50, maxPixels=1e10, re
                     "double":img.toDouble()
                     }
 
-        batch.Export.imagecollection.toDrive(
-            collection=imgtype[type],
-            description=id,
-            folder=folder,
-            fileNamePrefix=id,
+        imgname = imgid + str(i)
+
+        batch.image.toLocal(
+            image=img,
+            name=imgname,
             region=region,
-            scale=scale,
-            maxPixels=maxPixels
+            scale=scale
             )
+        # batch.Export.imagecollection.toDrive(
+        #     collection=imgtype[type],
+        #     description=id,
+        #     folder=folder,
+        #     fileNamePrefix=id,
+        #     region=region,
+        #     scale=scale,
+        #     maxPixels=maxPixels
+        #     )
 
 def lc_code_to_str(code):
     """
