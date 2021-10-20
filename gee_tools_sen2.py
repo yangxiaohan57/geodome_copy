@@ -27,33 +27,39 @@ def osm2gee_bbox(bbox):
     return bbox[1], bbox[0], bbox[3], bbox[2]
 
 
-def download_NAIP_toLocal(bbox, name, scale=30):
+def download_sen2_toLocal(bbox, name, scale=30):
     """
     downloads NAIP imagery from the specified bounding box and saves it as `name`
     """
     AOI = ee.Geometry.Rectangle(list(bbox), "EPSG:4326", False)
 
+    start_date = "2020-01-01"
+    end_date = "2020-06-30"
+
     collection = (
         ee.ImageCollection("COPERNICUS/S2_SR")
-        .filterDate("2020-01-01", "2020-06-30")
+        .filterDate(start_date, end_date)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',20))
         .filterBounds(AOI)
         .select(['B2', 'B3', 'B4'])
     )
 
-    ##image = ee.Image(collection.mosaic()).clip(AOI)
-    #batch.image.toLocal(image, name, scale=scale, region=AOI)
-    img_type = "float"
-    export_image(collection, name, img_type, region=AOI)
+    # Original code from previous year's:
+    # image = ee.Image(collection.mosaic()).clip(AOI)
+    # batch.image.toLocal(image, name, scale=scale, region=AOI)
+
+    export_image(collection, name, region=AOI)
 
 
-
-def export_image(collection, folder, type, scale=30, nimg=50, maxPixels=1e10, region=None):
-    """ Export one image to GEE Asset
+def export_image(collection, folder, scale=10, region=None):
+    """ Batch export images to local directory, one image at a time
     Arguments
-        :param image: image collection to export
-        :param roi=None:  specify the roi, default compute from image dimension
-        :param name=None: name of the image
+        :param collection: earth engine image collection object, a stack of images to export
+        :param folder: specify the name of the folder to store images in
+        :param scale=10: resolution of the image. Set to the orginal resolution of Sentinel 2 by default
+        :param region=None: Area of interest to crop the image to. 
+                            If pass in coordinates, the image will be cropped to 
+                            interested range of coordinates
     """
 
     colList = collection.toList(collection.size())
@@ -61,33 +67,17 @@ def export_image(collection, folder, type, scale=30, nimg=50, maxPixels=1e10, re
 
     for i in range(n):
         img = ee.Image(colList.get(i))
-        imgid = img.id().getInfo()
+        # imgid = img.id().getInfo()
         if region is None:
             region = img.geometry().bounds().getInfo()["coordinates"]
 
-        imgtype = {"float":img.toFloat(), 
-                    "byte":img.toByte(), 
-                    "int":img.toInt(),
-                    "double":img.toDouble()
-                    }
-
-        imgname = imgid + str(i)
-
         batch.image.toLocal(
             image=img,
-            name=imgname,
+            name=folder,
             region=region,
             scale=scale
             )
-        # batch.Export.imagecollection.toDrive(
-        #     collection=imgtype[type],
-        #     description=id,
-        #     folder=folder,
-        #     fileNamePrefix=id,
-        #     region=region,
-        #     scale=scale,
-        #     maxPixels=maxPixels
-        #     )
+
 
 def lc_code_to_str(code):
     """
@@ -129,12 +119,12 @@ if __name__ == "__main__":
         "-e",
         "--errorlog",
         help="path to error log file",
-        default="test/error.log",
+        default="data/error.log",
         type=str,
     )
 
     parser.add_argument(
-        "-o", "--output_dir", help="path to output directory", default="test/", type=str
+        "-o", "--output_dir", help="path to output directory", default="data/", type=str
     )
     parser.add_argument(
         "-lat",
@@ -195,7 +185,7 @@ if __name__ == "__main__":
             )
             bbox = osm2gee_bbox(bbox)
             try:
-                download_NAIP_toLocal(bbox, fname)
+                download_sen2_toLocal(bbox, fname)
                 os.remove(f"{fname}.zip")
             except Exception as e:
                 logf.write(f"point id {point[args.id_col]}: {e}\n")
