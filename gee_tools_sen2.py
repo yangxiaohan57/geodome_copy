@@ -27,7 +27,7 @@ def osm2gee_bbox(bbox):
     return bbox[1], bbox[0], bbox[3], bbox[2]
 
 
-def download_NAIP_toLocal(bbox, name, scale=1):
+def download_NAIP_toLocal(bbox, name, scale=30):
     """
     downloads NAIP imagery from the specified bounding box and saves it as `name`
     """
@@ -35,13 +35,51 @@ def download_NAIP_toLocal(bbox, name, scale=1):
 
     collection = (
         ee.ImageCollection("COPERNICUS/S2_SR")
-        .filterDate("2010-01-01", "2019-01-01")
+        .filterDate("2020-01-01", "2020-06-30")
+        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',20))
         .filterBounds(AOI)
+        .select(['B2', 'B3', 'B4'])
     )
 
-    image = ee.Image(collection.mosaic()).clip(AOI)
-    batch.image.toLocal(image, name, scale=scale, region=AOI)
+    ##image = ee.Image(collection.mosaic()).clip(AOI)
+    #batch.image.toLocal(image, name, scale=scale, region=AOI)
+    img_type = "float"
+    export_image(collection, name, img_type, region=AOI)
 
+
+
+def export_image(collection, folder, type, scale=30, nimg=50, maxPixels=1e10, region=None):
+    """ Export one image to GEE Asset
+    Arguments
+        :param image: image collection to export
+        :param roi=None:  specify the roi, default compute from image dimension
+        :param name=None: name of the image
+    """
+
+    colList = collection.toList(collection.size())
+    n = collection.size().getInfo()
+
+    for i in range(n):
+        img = ee.Image(colList.get(i))
+        id = img.id().getInfo()
+        if region is None:
+            region = img.geometry().bounds().getInfo()["coordinates"]
+
+        imgtype = {"float":img.toFloat(), 
+                    "byte":img.toByte(), 
+                    "int":img.toInt(),
+                    "double":img.toDouble()
+                    }
+
+        batch.Export.imagecollection.toDrive(
+            collection=imgtype[type],
+            description=id,
+            folder=folder,
+            fileNamePrefix=id,
+            region=region,
+            scale=scale,
+            maxPixels=maxPixels
+            )
 
 def lc_code_to_str(code):
     """
@@ -83,12 +121,12 @@ if __name__ == "__main__":
         "-e",
         "--errorlog",
         help="path to error log file",
-        default="data/error.log",
+        default="test/error.log",
         type=str,
     )
 
     parser.add_argument(
-        "-o", "--output_dir", help="path to output directory", default="data/", type=str
+        "-o", "--output_dir", help="path to output directory", default="test/", type=str
     )
     parser.add_argument(
         "-lat",
