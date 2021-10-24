@@ -7,3 +7,7 @@ data/*
 QA_tool/static/_*
 QA_tool/__pycache__/*
 QA_tool/flask_session/*
+.zip
+.jpg
+.jpeg
+.png
