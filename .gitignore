@@ -1,3 +1,4 @@
+############# Hidden files
 .*/
 notebooks/.ipynb_checkpoints/*
 notebooks/cache/*
@@ -7,9 +8,23 @@ data/*
 QA_tool/static/_*
 QA_tool/__pycache__/*
 QA_tool/flask_session/*
+
+############# Images
 *.zip
 *.jpg
 *.jpeg
 *.png
 *.tif
+
 powerplant/*
+powerplant/*.zip
+powerplant/*.jpg
+powerplant/*.jpeg
+powerplant/*.png
+powerplant/*.tif
+
+powerplant/*/*.zip
+powerplant/*/*.jpg
+powerplant/*/*.jpeg
+powerplant/*/*.tif
+powerplant/*/*.png
