@@ -28,3 +28,5 @@ powerplant/*/*.jpg
 powerplant/*/*.jpeg
 powerplant/*/*.tif
 powerplant/*/*.png
+
+image_processing_notebooks/*/*
