@@ -27,14 +27,14 @@ def osm2gee_bbox(bbox):
     return bbox[1], bbox[0], bbox[3], bbox[2]
 
 
-def download_sen2_toLocal(bbox, name, meta_dict):
+def download_sen2_toLocal(bbox, name, meta_dict, year):
     """
     downloads NAIP imagery from the specified bounding box and saves it as `name`
     """
     AOI = ee.Geometry.Rectangle(list(bbox), "EPSG:4326", False)
 
     start_date = "2020-01-01"
-    end_date = "2020-06-30"
+    end_date = "2020-12-30"
 
     collection = (
         ee.ImageCollection("COPERNICUS/S2_SR")
@@ -43,12 +43,10 @@ def download_sen2_toLocal(bbox, name, meta_dict):
         .filterBounds(AOI)
         .select(['B2', 'B3', 'B4'])
     )
-    # Original code from previous year's:
-    # image = ee.Image(collection.mosaic()).clip(AOI)
-    # batch.image.toLocal(image, name, scale=scale, region=AOI)
+
 
     export_image(collection, name, meta_dict, region=AOI)
-
+    os.remove(f"{name}.zip")
 
 def export_image(collection, folder, meta_dict, scale=10, region=None):
     """ Batch export images to local directory, one image at a time
@@ -66,7 +64,6 @@ def export_image(collection, folder, meta_dict, scale=10, region=None):
 
     for i in range(n):
         img = ee.Image(colList.get(i))
-        # imgid = img.id().getInfo()
         if region is None:
             region = img.geometry().bounds().getInfo()["coordinates"]
 
@@ -77,7 +74,8 @@ def export_image(collection, folder, meta_dict, scale=10, region=None):
             scale=scale
             )
         meta = img.getInfo()
-        meta_dict[folder] = meta
+        meta_dict[folder] = {}
+        meta_dict[folder][img.getInfo()['id'][17:]] = meta
 def lc_code_to_str(code):
     """
     translates land cover codes to their names
@@ -174,7 +172,7 @@ if __name__ == "__main__":
 
         for i, point in tqdm(tmp.iterrows()):
             fname = (
-                f"{args.output_dir}/{point[args.domain_col]}_id_{point[args.id_col]}"
+                f"{args.output_dir}/{point[args.domain_col]}"
             )
             if os.path.exists(f"{fname}"):  # or point['rand_point_id'] in error_points:
                 continue
@@ -183,8 +181,7 @@ if __name__ == "__main__":
             )
             bbox = osm2gee_bbox(bbox)
             try:
-                download_sen2_toLocal(bbox, fname, meta_dict)
-                os.remove(f"{fname}.zip")
+                download_sen2_toLocal(bbox, fname, meta_dict, year = 2020)
             except Exception as e:
                 logf.write(f"point id {point[args.id_col]}: {e}\n")
                 pass
