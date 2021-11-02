@@ -61,20 +61,12 @@ def export_image(collection, folder, meta_dict, scale=10, region=None):
 
     colList = collection.toList(collection.size())
     n = collection.size().getInfo()
-
+    meta_dict[folder] = {}
     for i in range(n):
         img = ee.Image(colList.get(i))
         if region is None:
             region = img.geometry().bounds().getInfo()["coordinates"]
-
-        batch.image.toLocal(
-            image=img,
-            name=folder,
-            region=region,
-            scale=scale
-            )
         meta = img.getInfo()
-        meta_dict[folder] = {}
         meta_dict[folder][img.getInfo()['id'][17:]] = meta
 def lc_code_to_str(code):
     """
