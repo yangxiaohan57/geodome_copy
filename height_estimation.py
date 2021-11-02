@@ -10,7 +10,7 @@ def connected_components(binary_image, thresh):
     """
     Execute Connected Components Function.
     """
-    labeled, nr_objects = ndimage.label(binary_image > thresh)
+    labeled, nr_objects = ndimage.label(np.where(binary_image == 0, 1, 0))
     return labeled, nr_objects
 
 def xy_coordinates(labeled):
@@ -73,11 +73,11 @@ def plot_cc(binary_image, labeled, slope, intersect, dir):
     plt.savefig(dir)
     plt.close()
 
-def dist(intersect, binary_image, slope):
+def dist(intersect, binary_image):
     """
     Calculate the distance from the origin to the intersection
     """
-    dist = math.sqrt( (binary_image.shape[1] - intersect[1])**2 + (binary_image.shape[0] - intersect[0])**2 )
+    dist = math.sqrt( (binary_image.shape[1] - intersect[1])**2 + (binary_image.shape[0] - intersect[0])**2 ) * 10
     return dist
 
 def calculate_stackheight(shadow_length, zn_angle, slope):
@@ -87,5 +87,5 @@ def calculate_stackheight(shadow_length, zn_angle, slope):
     sl_ft = shadow_length * 3.28084
     elevation = 90 - zn_angle
     elevation_rad = math.radians(elevation)
-    height = math.tan(sl_ft) * elevation_rad
+    height = math.tan(elevation_rad) * sl_ft
     return height

@@ -17,9 +17,9 @@ def plot_threshold(image_array, slope, dir):
     plt.scatter(image_array.shape[0], image_array.shape[1], c='red', s=30, label = 'Stack Base')
     plt.axline((image_array.shape[0]-10, image_array.shape[1]), slope=slope, color='red',
                 linestyle='dashed')
-    plt.axline((image_array.shape[0], image_array.shape[1]), slope=slope, color='red', 
+    plt.axline((image_array.shape[0], image_array.shape[1]), slope=slope, color='red',
                 label='Shadow Trajectory')
-    plt.axline((image_array.shape[0] + 10, image_array.shape[0]), slope=slope, color='red', 
+    plt.axline((image_array.shape[0] + 10, image_array.shape[0]), slope=slope, color='red',
                 linestyle='dashed')
     plt.legend(fontsize=18)
     plt.savefig(dir)

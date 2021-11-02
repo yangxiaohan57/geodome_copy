@@ -55,16 +55,16 @@ for pplant_name in plant_names:
         img_arr = threshold(gray_cropped, thresh)
 
         # save thresholded image
-        dir = '{}/{}.png'.format(pplant_name, image_name)
+        dir = '{}/{}.png'.format(pplant_name, image_name + 'GRAY')
         plot_threshold(img_arr, slope, dir)
 
         # Connected connected
         labeled, nr_objects = connected_components(img_arr, thresh)
         xy = xy_coordinates(labeled)
         intersect = intersection_pt(intercept, slope, xy, labeled)
-        dir = '{}/{}.png'.format(pplant_name, image_name)
+        dir = '{}/{}.png'.format(pplant_name, image_name + "CC")
         plot_cc(img_arr, labeled, slope, intersect, dir)
-        shadow_len = dist(intersect, img_arr, slope)
+        shadow_len = dist(intersect, img_arr)
         stack_height = calculate_stackheight(shadow_len, zn_angle, slope)
         data.append([image_name, pplant_name, date, coverage, zn_angle, az_angle, nr_objects, slope, intercept, shadow_len, stack_height])
 df = pd.DataFrame(data, columns = ['image_name', 'powerplant', 'date', 'cloud_coverage', 'zenith_angle', 'azimuth_angle', 'blobs', 'slope', 'intercept', 'shadow_length', 'stack_height'])
