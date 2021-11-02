@@ -1,15 +1,76 @@
-'''
-README:
-This python script performs image preprocessing, including:
-	- image cropping
-	- grey scale
-	- shadow angle estimation
-
-The below functions are supposed be called sequentially.
-'''
-
+##############################################################
+# README:
+# This python script performs image preprocessing, including:
+# 	- image cropping
+#   - grey scale
+#	- shadow angle estimation
+#
+# The below functions are supposed be called sequentially.
+##############################################################
 
 import numpy as np
+import rasterio
+import pickle
+
+'''
+Get all image names function
+- This function gets all the images names downloaded and stored in "/data/powerplantname"
+
+:param
+'''
+def get_all_img_names():
+	# read in metadata as a dict, with image names as keys and each image's metadata as values
+	with open("meta", "rb") as f:
+    	meta_data = pickle.load(f)
+    img_name_lst = meta_data.keys()
+
+	return img_name_lst
+
+
+
+'''
+Perform band stacking function
+- it calls func: stack_bands iteratively and stacks the bands for every images. 
+
+:param img_name_lst: list of all image names
+'''
+def perform_band_stacking(img_name_lst):
+	for img in img_name_lst:
+		stack_bands(str(img), str(img))
+
+
+
+'''
+Based on Kyle's code
+(!!!!!!!!Private function, shoudn't be called from outside this script!!!!!!!!!!)
+
+Stack bands function 
+- This function stacks the RGB bands tif file to become a visible image.
+
+:params img_name: the name of the 3 bands' tif files
+:params output_name: the name of the stacked output
+'''
+def stack_bands(img_name, output_name):
+	file_list = [name + '.B4.tif', name + '.B3.tif', name + '.B2.tif']
+
+	# Read metadata of first file
+    with rasterio.open(file_list[0]) as img0:
+        meta = img0.meta
+
+    # Update meta to reflect the number of layers
+    meta.update(count = len(file_list))
+
+    # Read each layer and write it to stack
+    with rasterio.open(outname, 'w', **meta) as dst:
+        for id, layer in enumerate(file_list, start=1):
+            with rasterio.open(layer) as src1:
+                dst.write_band(id, src1.read(1))
+
+
+
+#################################################################################
+### 						Image pre-processing below                        ###
+#################################################################################
 
 
 '''
