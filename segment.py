@@ -23,3 +23,4 @@ def plot_threshold(image_array, slope, dir):
                 linestyle='dashed')
     plt.legend(fontsize=18)
     plt.savefig(dir)
+    plt.close()
