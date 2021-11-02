@@ -71,6 +71,7 @@ def plot_cc(binary_image, labeled, slope, intersect, dir):
     # plt.legend(bbox_to_anchor=(0.5, 0., 1.1, 1), fontsize=18)
     plt.axis('off')
     plt.savefig(dir)
+    plt.close()
 
 def dist(intersect, binary_image, slope):
     """
