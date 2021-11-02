@@ -6,11 +6,11 @@ import math
 import helper
 import numpy as np
 
-def connected_components(binary_image):
+def connected_components(binary_image, thresh):
     """
     Execute Connected Components Function.
     """
-    labeled, nr_objects = ndimage.label(binary_image)
+    labeled, nr_objects = ndimage.label(binary_image > thresh)
     return labeled, nr_objects
 
 def xy_coordinates(labeled):

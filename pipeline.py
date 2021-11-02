@@ -59,7 +59,7 @@ for pplant_name in plant_names:
         plot_threshold(img_arr, slope, dir)
 
         # Connected connected
-        labeled, nr_objects = connected_components(img_arr)
+        labeled, nr_objects = connected_components(img_arr, thresh)
         xy = xy_coordinates(labeled)
         intersect = intersection_pt(intercept, slope, xy, labeled)
         dir = '{}/{}.png'.format(pplant_name, image_name)
