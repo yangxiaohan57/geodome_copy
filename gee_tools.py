@@ -5,9 +5,9 @@ CLI tool to download satellite imagery from google earth engine
 import ee
 import numpy as np
 import pandas as pd
-
+import pickle
 import os
-
+import rasterio
 from osm_tools import _bbox_from_point, gdf_from_bbox
 
 ee.Initialize()
@@ -27,14 +27,14 @@ def osm2gee_bbox(bbox):
     return bbox[1], bbox[0], bbox[3], bbox[2]
 
 
-def download_sen2_toLocal(bbox, name, scale=30):
+def download_sen2_toLocal(bbox, name, meta_dict, year):
     """
     downloads NAIP imagery from the specified bounding box and saves it as `name`
     """
     AOI = ee.Geometry.Rectangle(list(bbox), "EPSG:4326", False)
 
     start_date = "2020-01-01"
-    end_date = "2020-06-30"
+    end_date = "2020-12-30"
 
     collection = (
         ee.ImageCollection("COPERNICUS/S2_SR")
@@ -44,21 +44,18 @@ def download_sen2_toLocal(bbox, name, scale=30):
         .select(['B2', 'B3', 'B4'])
     )
 
-    # Original code from previous year's:
-    # image = ee.Image(collection.mosaic()).clip(AOI)
-    # batch.image.toLocal(image, name, scale=scale, region=AOI)
 
-    export_image(collection, name, region=AOI)
+    export_image(collection, name, meta_dict, region=AOI)
+    os.remove(f"{name}.zip")
 
-
-def export_image(collection, folder, scale=10, region=None):
+def export_image(collection, folder, meta_dict, scale=10, region=None):
     """ Batch export images to local directory, one image at a time
     Arguments
         :param collection: earth engine image collection object, a stack of images to export
         :param folder: specify the name of the folder to store images in
         :param scale=10: resolution of the image. Set to the orginal resolution of Sentinel 2 by default
-        :param region=None: Area of interest to crop the image to. 
-                            If pass in coordinates, the image will be cropped to 
+        :param region=None: Area of interest to crop the image to.
+                            If pass in coordinates, the image will be cropped to
                             interested range of coordinates
     """
 
@@ -67,7 +64,6 @@ def export_image(collection, folder, scale=10, region=None):
 
     for i in range(n):
         img = ee.Image(colList.get(i))
-        # imgid = img.id().getInfo()
         if region is None:
             region = img.geometry().bounds().getInfo()["coordinates"]
 
@@ -77,8 +73,9 @@ def export_image(collection, folder, scale=10, region=None):
             region=region,
             scale=scale
             )
-
-
+        meta = img.getInfo()
+        meta_dict[folder] = {}
+        meta_dict[folder][img.getInfo()['id'][17:]] = meta
 def lc_code_to_str(code):
     """
     translates land cover codes to their names
@@ -169,14 +166,13 @@ if __name__ == "__main__":
     # error_points = set([int(l.split(':')[0].split()[-1]) for l in lines])
 
     logf = open(args.errorlog, "w")
-
+    meta_dict = {}
     for lc in tqdm(points[args.domain_col].unique()):
-        print(lc)
         tmp = points[points[args.domain_col] == lc]
 
         for i, point in tqdm(tmp.iterrows()):
             fname = (
-                f"{args.output_dir}/{point[args.domain_col]}_id_{point[args.id_col]}"
+                f"{args.output_dir}/{point[args.domain_col]}"
             )
             if os.path.exists(f"{fname}"):  # or point['rand_point_id'] in error_points:
                 continue
@@ -185,8 +181,10 @@ if __name__ == "__main__":
             )
             bbox = osm2gee_bbox(bbox)
             try:
-                download_sen2_toLocal(bbox, fname)
-                os.remove(f"{fname}.zip")
+                download_sen2_toLocal(bbox, fname, meta_dict, year = 2020)
             except Exception as e:
                 logf.write(f"point id {point[args.id_col]}: {e}\n")
+                pass
+            with open("meta", "wb") as f:
+                pickle.dump(meta_dict, f)
                 pass
