@@ -33,8 +33,8 @@ def download_sen2_toLocal(bbox, name, meta_dict, year):
     """
     AOI = ee.Geometry.Rectangle(list(bbox), "EPSG:4326", False)
 
-    start_date = "2020-01-01"
-    end_date = "2020-12-30"
+    start_date = "2020-10-01"
+    end_date = "2021-3-30"
 
     collection = (
         ee.ImageCollection("COPERNICUS/S2_SR")
@@ -61,12 +61,11 @@ def export_image(collection, folder, meta_dict, scale=10, region=None):
 
     colList = collection.toList(collection.size())
     n = collection.size().getInfo()
-
+    meta_dict[folder] = {}
     for i in range(n):
         img = ee.Image(colList.get(i))
         if region is None:
             region = img.geometry().bounds().getInfo()["coordinates"]
-
         batch.image.toLocal(
             image=img,
             name=folder,
@@ -74,7 +73,6 @@ def export_image(collection, folder, meta_dict, scale=10, region=None):
             scale=scale
             )
         meta = img.getInfo()
-        meta_dict[folder] = {}
         meta_dict[folder][img.getInfo()['id'][17:]] = meta
 def lc_code_to_str(code):
     """
