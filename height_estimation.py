@@ -52,12 +52,12 @@ def plot_cc(binary_image, labeled, slope, intersect, dir):
 
     # angle lines
     plt.axline((binary_image.shape[0], binary_image.shape[1]), slope=slope, color='red',
-               label='Est Shadow Trajectory')
+               label='Shadow Trajectory')
 
-    plt.axline((binary_image.shape[0] - 15, binary_image.shape[1]), slope=slope, color='red',
-               label='Est Shadow Trajectory Error Bands', linestyle='dashed')
+    plt.axline((binary_image.shape[0], binary_image.shape[1]), slope=slope + math.radians(25), color='red',
+                 linestyle='dashed')
 
-    plt.axline((binary_image.shape[0] + 15, binary_image.shape[1]), slope=slope, color='red',
+    plt.axline((binary_image.shape[0], binary_image.shape[1]), slope=slope - math.radians(25), color='red',
                linestyle='dashed')
 
     values = np.unique(labeled.ravel())

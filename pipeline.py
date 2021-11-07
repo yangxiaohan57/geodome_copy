@@ -44,6 +44,9 @@ for pplant_name in plant_names:
         # Caluclation of slope & intercept
         intercept, slope = linear_graph(gray_cropped, az_angle)
 
+        # Output RGB image with bands
+        dir = '{}/{}.png'.format(pplant_name, image_name + '_RGB')
+        plot(img_arr, slope, dir)
 
         ###################
         # threshold image #
@@ -55,14 +58,14 @@ for pplant_name in plant_names:
         img_arr = threshold(gray_cropped, thresh)
 
         # save thresholded image
-        dir = '{}/{}.png'.format(pplant_name, image_name + 'GRAY')
-        plot_threshold(img_arr, slope, dir)
+        dir = '{}/{}.png'.format(pplant_name, image_name + '_GRAY')
+        plot(img_arr, slope, dir)
 
         # Connected connected
         labeled, nr_objects = connected_components(img_arr, thresh)
         xy = xy_coordinates(labeled)
         intersect = intersection_pt(intercept, slope, xy, labeled)
-        dir = '{}/{}.png'.format(pplant_name, image_name + "CC")
+        dir = '{}/{}.png'.format(pplant_name, image_name + "_CC")
         plot_cc(img_arr, labeled, slope, intersect, dir)
         shadow_len = dist(intersect, img_arr)
         stack_height = calculate_stackheight(shadow_len, zn_angle, slope)
