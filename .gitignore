@@ -5,10 +5,38 @@ __pycache__/*
 data/*
 .DS_Store
 QA_tool/static/_*
+############# Hidden files
+.*/
+notebooks/.ipynb_checkpoints/*
+notebooks/cache/*
+__pycache__/*
+data/*
+.DS_Store
+QA_tool/static/_*
 QA_tool/__pycache__/*
 QA_tool/flask_session/*
-.zip
-.jpg
-.jpeg
-.png
-.tif
+
+############# Images
+*.zip
+*.jpg
+*.jpeg
+*.png
+*.tif
+
+powerplant/*
+powerplant/*.zip
+powerplant/*.jpg
+powerplant/*.jpeg
+powerplant/*.png
+powerplant/*.tif
+
+powerplant/*/*.zip
+powerplant/*/*.jpg
+powerplant/*/*.jpeg
+powerplant/*/*.tif
+powerplant/*/*.png
+
+image_processing_notebooks/*/*
+
+############## Metadata
+meta
