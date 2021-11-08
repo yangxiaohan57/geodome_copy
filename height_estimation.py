@@ -35,7 +35,7 @@ def intersection_pt(intercept, slope, xy, labeled):
         y = round(x*slope + intercept)
         if [y, x] in xy:
             intersect.append([y,x])
-    return min(intersect)
+    return min(intersect, default="EMPTY")
 
 def plot_cc(binary_image, labeled, slope, intersect, dir):
     """
@@ -77,7 +77,10 @@ def dist(intersect, binary_image):
     """
     Calculate the distance from the origin to the intersection
     """
-    dist = math.sqrt( (binary_image.shape[1] - intersect[1])**2 + (binary_image.shape[0] - intersect[0])**2 ) * 10
+    if isinstance(intersect[1], int) and isinstance(intersect[0], int):
+        dist = math.sqrt( (binary_image.shape[1] - intersect[1])**2 + (binary_image.shape[0] - intersect[0])**2 ) * 10
+    else:
+        dist = 0
     return dist
 
 def calculate_stackheight(shadow_length, zn_angle, slope):

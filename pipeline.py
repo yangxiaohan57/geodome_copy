@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 import sys
 import numpy as np
 import pandas as pd
@@ -46,7 +48,7 @@ for pplant_name in plant_names:
 
         # Output RGB image with bands
         dir = '{}/{}.png'.format(pplant_name, image_name + '_RGB')
-        plot(img_arr, slope, dir)
+        plot(cropped, slope, dir)
 
         ###################
         # threshold image #
@@ -69,6 +71,11 @@ for pplant_name in plant_names:
         plot_cc(img_arr, labeled, slope, intersect, dir)
         shadow_len = dist(intersect, img_arr)
         stack_height = calculate_stackheight(shadow_len, zn_angle, slope)
-        data.append([image_name, pplant_name, date, coverage, zn_angle, az_angle, nr_objects, slope, intercept, shadow_len, stack_height])
+        data.append([image_name, pplant_name[6:], date, coverage, zn_angle, az_angle, nr_objects, slope, intercept, shadow_len, stack_height])
 df = pd.DataFrame(data, columns = ['image_name', 'powerplant', 'date', 'cloud_coverage', 'zenith_angle', 'azimuth_angle', 'blobs', 'slope', 'intercept', 'shadow_length', 'stack_height'])
-df.to_csv('data/results.csv', index = False)
+# Get the actual stack height
+col_list = ['powerplant','target_stack_height']
+actual = pd.read_csv('data/powerstations.csv', usecols = col_list)
+# Merge the actual stack height column to df
+df = df.merge(actual, how = 'left', on = 'powerplant')
+df.to_csv('data/results(final).csv', index = False)

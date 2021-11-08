@@ -1,4 +1,5 @@
 import math
+import matplotlib.pyplot as plt
 # Contain the common functions used by all python files
 def linear_graph(image_array, az_angle):
     """
@@ -20,7 +21,7 @@ def plot(image_array, slope, dir):
                 linestyle='dashed')
     plt.axline((image_array.shape[0], image_array.shape[1]), slope=slope, color='red',
                 label='Shadow Trajectory')
-    plt.axline((image_array.shape[0], image_array.shape[0]), slope=slope - math.radians(25), color='red',
+    plt.axline((image_array.shape[0], image_array.shape[1]), slope=slope - math.radians(25), color='red',
                 linestyle='dashed')
     plt.legend(fontsize=18)
     plt.savefig(dir)
