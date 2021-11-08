@@ -30,3 +30,6 @@ powerplant/*/*.tif
 powerplant/*/*.png
 
 image_processing_notebooks/*/*
+
+############## Metadata
+meta
